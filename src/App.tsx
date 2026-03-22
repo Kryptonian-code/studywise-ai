@@ -3,6 +3,8 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
@@ -25,24 +27,26 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/dashboard/projects" element={<Projects />} />
-          <Route path="/dashboard/projects/new" element={<NewProject />} />
-          <Route path="/dashboard/documents" element={<Documents />} />
-          <Route path="/dashboard/documents/generate" element={<GenerateDocument />} />
-          <Route path="/dashboard/uploads" element={<Uploads />} />
-          <Route path="/dashboard/scoring" element={<Scoring />} />
-          <Route path="/dashboard/deadlines" element={<Deadlines />} />
-          <Route path="/dashboard/settings" element={<Settings />} />
-          <Route path="/dashboard/blog" element={<Blog />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
+      <AuthProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
+            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+            <Route path="/dashboard/projects" element={<ProtectedRoute><Projects /></ProtectedRoute>} />
+            <Route path="/dashboard/projects/new" element={<ProtectedRoute><NewProject /></ProtectedRoute>} />
+            <Route path="/dashboard/documents" element={<ProtectedRoute><Documents /></ProtectedRoute>} />
+            <Route path="/dashboard/documents/generate" element={<ProtectedRoute><GenerateDocument /></ProtectedRoute>} />
+            <Route path="/dashboard/uploads" element={<ProtectedRoute><Uploads /></ProtectedRoute>} />
+            <Route path="/dashboard/scoring" element={<ProtectedRoute><Scoring /></ProtectedRoute>} />
+            <Route path="/dashboard/deadlines" element={<ProtectedRoute><Deadlines /></ProtectedRoute>} />
+            <Route path="/dashboard/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+            <Route path="/dashboard/blog" element={<ProtectedRoute><Blog /></ProtectedRoute>} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );
