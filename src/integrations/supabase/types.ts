@@ -14,7 +14,96 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      user_profiles: {
+        Row: {
+          achievements: string | null
+          career_change_context: string | null
+          career_goals: string | null
+          created_at: string
+          current_country: string | null
+          degree: string | null
+          full_name: string | null
+          gpa: string | null
+          gpa_scale: string | null
+          graduation_year: number | null
+          has_study_gap: boolean | null
+          id: string
+          institution: string | null
+          is_career_change: boolean | null
+          limited_research: boolean | null
+          low_gpa: boolean | null
+          nationality: string | null
+          personal_statement_notes: string | null
+          programme_studied: string | null
+          publications: string | null
+          research_experience: string | null
+          skills: string | null
+          study_gap_explanation: string | null
+          study_level: string | null
+          updated_at: string
+          user_id: string
+          work_experience: string | null
+        }
+        Insert: {
+          achievements?: string | null
+          career_change_context?: string | null
+          career_goals?: string | null
+          created_at?: string
+          current_country?: string | null
+          degree?: string | null
+          full_name?: string | null
+          gpa?: string | null
+          gpa_scale?: string | null
+          graduation_year?: number | null
+          has_study_gap?: boolean | null
+          id?: string
+          institution?: string | null
+          is_career_change?: boolean | null
+          limited_research?: boolean | null
+          low_gpa?: boolean | null
+          nationality?: string | null
+          personal_statement_notes?: string | null
+          programme_studied?: string | null
+          publications?: string | null
+          research_experience?: string | null
+          skills?: string | null
+          study_gap_explanation?: string | null
+          study_level?: string | null
+          updated_at?: string
+          user_id: string
+          work_experience?: string | null
+        }
+        Update: {
+          achievements?: string | null
+          career_change_context?: string | null
+          career_goals?: string | null
+          created_at?: string
+          current_country?: string | null
+          degree?: string | null
+          full_name?: string | null
+          gpa?: string | null
+          gpa_scale?: string | null
+          graduation_year?: number | null
+          has_study_gap?: boolean | null
+          id?: string
+          institution?: string | null
+          is_career_change?: boolean | null
+          limited_research?: boolean | null
+          low_gpa?: boolean | null
+          nationality?: string | null
+          personal_statement_notes?: string | null
+          programme_studied?: string | null
+          publications?: string | null
+          research_experience?: string | null
+          skills?: string | null
+          study_gap_explanation?: string | null
+          study_level?: string | null
+          updated_at?: string
+          user_id?: string
+          work_experience?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
