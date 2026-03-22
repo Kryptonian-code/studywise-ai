@@ -19,6 +19,7 @@ const Signup = () => {
 
   if (!authLoading && session) return <Navigate to="/dashboard" replace />;
 
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     if (password.length < 6) { toast.error("Password must be at least 6 characters"); return; }
     setLoading(true);
