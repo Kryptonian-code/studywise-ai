@@ -3,15 +3,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { toast } from "sonner";
-import { Sparkles, Loader2 } from "lucide-react";
+import { Sparkles, Loader2, Copy, Download } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const docTypes = [
   "Statement of Purpose", "Personal Statement", "Research Proposal",
   "Motivation Letter", "Study Plan", "Scholarship Essay",
-  "Academic CV", "Supervisor Email", "Recommendation Request",
-  "Gap Explanation Letter", "Visa Statement",
+  "Academic CV", "Professional CV", "Supervisor Email",
+  "Recommendation Request", "Gap Explanation Letter", "Visa Statement",
 ];
 
 const tones = [
@@ -24,21 +25,135 @@ const GenerateDocument = () => {
   const [tone, setTone] = useState("Standard Formal");
   const [programme, setProgramme] = useState("");
   const [university, setUniversity] = useState("");
+  const [country, setCountry] = useState("");
   const [background, setBackground] = useState("");
   const [goals, setGoals] = useState("");
+  const [additionalContext, setAdditionalContext] = useState("");
   const [generating, setGenerating] = useState(false);
   const [result, setResult] = useState("");
+  const abortRef = useRef<AbortController | null>(null);
 
   const handleGenerate = async () => {
-    if (!programme || !university) { toast.error("Please fill in programme and university"); return; }
+    if (!programme || !university) {
+      toast.error("Please fill in programme and university");
+      return;
+    }
+
     setGenerating(true);
-    // Simulate AI generation — will be replaced with edge function call
-    await new Promise((r) => setTimeout(r, 2500));
-    setResult(
-      `[AI-Generated ${docType}]\n\nDear Admissions Committee,\n\nI am writing to express my strong interest in the ${programme} programme at ${university}. ${background ? `My background in ${background} has prepared me uniquely for this opportunity.` : ''}\n\n${goals ? `My career aspirations include ${goals}, which align closely with the research focus of your department.` : 'My career goals are closely aligned with the strengths of your programme.'}\n\nThis document was generated in ${tone} tone. In the full version, this will be a comprehensive, multi-section document built through structured AI workflows.\n\n[End of preview — connect AI provider to generate full documents]`
-    );
+    setResult("");
+
+    abortRef.current = new AbortController();
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-document`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({
+            docType, tone, programme, university, country,
+            background, goals, additionalContext,
+          }),
+          signal: abortRef.current.signal,
+        }
+      );
+
+      if (!response.ok) {
+        const err = await response.json();
+        toast.error(err.error || "Generation failed");
+        setGenerating(false);
+        return;
+      }
+
+      if (!response.body) throw new Error("No response body");
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let fullText = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+
+        let newlineIdx: number;
+        while ((newlineIdx = buffer.indexOf("\n")) !== -1) {
+          let line = buffer.slice(0, newlineIdx);
+          buffer = buffer.slice(newlineIdx + 1);
+
+          if (line.endsWith("\r")) line = line.slice(0, -1);
+          if (line.startsWith(":") || line.trim() === "") continue;
+          if (!line.startsWith("data: ")) continue;
+
+          const jsonStr = line.slice(6).trim();
+          if (jsonStr === "[DONE]") break;
+
+          try {
+            const parsed = JSON.parse(jsonStr);
+            const content = parsed.choices?.[0]?.delta?.content;
+            if (content) {
+              fullText += content;
+              setResult(fullText);
+            }
+          } catch {
+            buffer = line + "\n" + buffer;
+            break;
+          }
+        }
+      }
+
+      // Flush remaining
+      if (buffer.trim()) {
+        for (let raw of buffer.split("\n")) {
+          if (!raw || !raw.startsWith("data: ")) continue;
+          const jsonStr = raw.slice(6).trim();
+          if (jsonStr === "[DONE]") continue;
+          try {
+            const parsed = JSON.parse(jsonStr);
+            const content = parsed.choices?.[0]?.delta?.content;
+            if (content) {
+              fullText += content;
+              setResult(fullText);
+            }
+          } catch { /* ignore */ }
+        }
+      }
+
+      toast.success("Document generated!");
+    } catch (e: any) {
+      if (e.name !== "AbortError") {
+        console.error(e);
+        toast.error("Generation failed. Please try again.");
+      }
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(result);
+    toast.success("Copied to clipboard");
+  };
+
+  const handleDownload = () => {
+    const blob = new Blob([result], { type: "text/markdown" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${docType.replace(/\s+/g, "_")}.md`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleCancel = () => {
+    abortRef.current?.abort();
     setGenerating(false);
-    toast.success("Document generated!");
   };
 
   return (
@@ -70,14 +185,20 @@ const GenerateDocument = () => {
               <Input value={programme} onChange={(e) => setProgramme(e.target.value)} placeholder="e.g. MSc Computer Science" />
             </div>
 
-            <div className="space-y-2">
-              <Label>University *</Label>
-              <Input value={university} onChange={(e) => setUniversity(e.target.value)} placeholder="e.g. University of Oxford" />
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label>University *</Label>
+                <Input value={university} onChange={(e) => setUniversity(e.target.value)} placeholder="e.g. University of Oxford" />
+              </div>
+              <div className="space-y-2">
+                <Label>Country</Label>
+                <Input value={country} onChange={(e) => setCountry(e.target.value)} placeholder="e.g. United Kingdom" />
+              </div>
             </div>
 
             <div className="space-y-2">
               <Label>Your Academic Background</Label>
-              <Textarea value={background} onChange={(e) => setBackground(e.target.value)} placeholder="Briefly describe your academic background, degree, key courses…" rows={3} />
+              <Textarea value={background} onChange={(e) => setBackground(e.target.value)} placeholder="Degree, institution, key courses, GPA, research experience…" rows={3} />
             </div>
 
             <div className="space-y-2">
@@ -85,23 +206,54 @@ const GenerateDocument = () => {
               <Textarea value={goals} onChange={(e) => setGoals(e.target.value)} placeholder="What do you want to achieve after completing this programme?" rows={3} />
             </div>
 
-            <Button variant="hero" size="lg" onClick={handleGenerate} disabled={generating}>
-              {generating ? <><Loader2 className="h-4 w-4 animate-spin" /> Generating…</> : <><Sparkles className="h-4 w-4" /> Generate Document</>}
-            </Button>
+            <div className="space-y-2">
+              <Label>Additional Context (optional)</Label>
+              <Textarea value={additionalContext} onChange={(e) => setAdditionalContext(e.target.value)} placeholder="Work experience, specific faculty, research interests, scholarship name…" rows={2} />
+            </div>
+
+            <div className="flex gap-3">
+              <Button variant="hero" size="lg" onClick={handleGenerate} disabled={generating}>
+                {generating ? <><Loader2 className="h-4 w-4 animate-spin" /> Generating…</> : <><Sparkles className="h-4 w-4" /> Generate Document</>}
+              </Button>
+              {generating && (
+                <Button variant="outline" size="lg" onClick={handleCancel}>Cancel</Button>
+              )}
+            </div>
           </div>
 
           {/* Output */}
-          <div className="rounded-xl border border-border/60 bg-card p-6 shadow-sm">
-            <h3 className="mb-4 font-display text-base font-semibold">Generated Document</h3>
-            {result ? (
-              <div className="prose prose-sm max-w-none whitespace-pre-wrap text-sm leading-relaxed text-foreground">
-                {result}
-              </div>
-            ) : (
-              <div className="flex h-64 items-center justify-center text-sm text-muted-foreground">
-                Your generated document will appear here.
-              </div>
-            )}
+          <div className="flex flex-col rounded-xl border border-border/60 bg-card shadow-sm">
+            <div className="flex items-center justify-between border-b border-border px-5 py-3">
+              <h3 className="font-display text-sm font-semibold">Generated Document</h3>
+              {result && (
+                <div className="flex gap-1">
+                  <Button variant="ghost" size="icon" onClick={handleCopy} title="Copy">
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon" onClick={handleDownload} title="Download">
+                    <Download className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
+            </div>
+            <div className="flex-1 overflow-y-auto p-5">
+              {result ? (
+                <div className="prose prose-sm max-w-none whitespace-pre-wrap text-sm leading-relaxed text-foreground">
+                  {result}
+                </div>
+              ) : (
+                <div className="flex h-64 items-center justify-center text-sm text-muted-foreground">
+                  {generating ? (
+                    <div className="flex flex-col items-center gap-3">
+                      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                      <span>Generating your {docType}…</span>
+                    </div>
+                  ) : (
+                    "Your generated document will appear here."
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
