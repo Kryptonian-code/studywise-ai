@@ -27,13 +27,8 @@ export const DashboardLayout = ({ children }: { children: ReactNode }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [userName, setUserName] = useState("");
-
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      setUserName(data.user?.user_metadata?.full_name || data.user?.email || "User");
-    });
-  }, []);
+  const { user } = useAuth();
+  const userName = user?.user_metadata?.full_name || user?.email || "User";
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
