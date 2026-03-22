@@ -20,9 +20,9 @@ const Login = () => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    setSubmitting(true);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
-    setLoading(false);
+    setSubmitting(false);
     if (error) {
       toast.error(error.message);
     } else {
