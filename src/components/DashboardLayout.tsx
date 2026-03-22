@@ -2,8 +2,8 @@ import { ReactNode, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   GraduationCap, LayoutDashboard, FolderOpen, FileText, Upload,
-  BarChart3, Clock, Settings, LogOut, Menu, X, ChevronDown, User,
-  BookOpen, Users, MessageSquare,
+  BarChart3, Clock, Settings, LogOut, Menu, X,
+  BookOpen, FlaskConical, Shield, PenTool, MessageCircle, Library, User,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,11 @@ const navItems = [
   { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
   { label: "Projects", icon: FolderOpen, href: "/dashboard/projects" },
   { label: "Documents", icon: FileText, href: "/dashboard/documents" },
+  { label: "Questionnaire", icon: MessageCircle, href: "/dashboard/questionnaire" },
+  { label: "Research Topic", icon: FlaskConical, href: "/dashboard/research-topic" },
+  { label: "Writing Hints", icon: PenTool, href: "/dashboard/writing-hints" },
+  { label: "Profile Strength", icon: Shield, href: "/dashboard/profile-strength" },
+  { label: "Templates", icon: Library, href: "/dashboard/templates" },
   { label: "Uploads", icon: Upload, href: "/dashboard/uploads" },
   { label: "Scoring", icon: BarChart3, href: "/dashboard/scoring" },
   { label: "Deadlines", icon: Clock, href: "/dashboard/deadlines" },
@@ -20,6 +25,7 @@ const navItems = [
 ];
 
 const bottomItems = [
+  { label: "My Profile", icon: User, href: "/dashboard/my-profile" },
   { label: "Settings", icon: Settings, href: "/dashboard/settings" },
 ];
 
@@ -41,7 +47,7 @@ export const DashboardLayout = ({ children }: { children: ReactNode }) => {
       <Link
         to={item.href}
         onClick={() => setSidebarOpen(false)}
-        className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+        className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
           active
             ? "bg-sidebar-accent text-sidebar-primary"
             : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
@@ -61,18 +67,18 @@ export const DashboardLayout = ({ children }: { children: ReactNode }) => {
         </div>
         <span className="font-display text-base font-bold">StudyWise AI</span>
       </div>
-      <nav className="flex-1 space-y-1 px-3 py-4">
+      <nav className="flex-1 space-y-0.5 overflow-y-auto px-3 py-4">
         {navItems.map((item) => (
           <NavLink key={item.href} item={item} />
         ))}
       </nav>
-      <div className="border-t border-sidebar-border px-3 py-3 space-y-1">
+      <div className="border-t border-sidebar-border px-3 py-3 space-y-0.5">
         {bottomItems.map((item) => (
           <NavLink key={item.href} item={item} />
         ))}
         <button
           onClick={handleLogout}
-          className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+          className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
         >
           <LogOut className="h-4 w-4" />
           Sign Out
@@ -93,22 +99,17 @@ export const DashboardLayout = ({ children }: { children: ReactNode }) => {
 
   return (
     <div className="flex h-screen bg-background">
-      {/* Desktop sidebar */}
-      <aside className="hidden w-64 shrink-0 lg:block">
+      <aside className="hidden w-60 shrink-0 lg:block">
         <Sidebar />
       </aside>
-
-      {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <div className="absolute inset-0 bg-foreground/20" onClick={() => setSidebarOpen(false)} />
-          <aside className="absolute left-0 top-0 h-full w-64">
+          <aside className="absolute left-0 top-0 h-full w-60">
             <Sidebar />
           </aside>
         </div>
       )}
-
-      {/* Main content */}
       <div className="flex flex-1 flex-col overflow-hidden">
         <header className="flex h-16 items-center gap-4 border-b border-border px-6">
           <button className="lg:hidden" onClick={() => setSidebarOpen(true)}>
