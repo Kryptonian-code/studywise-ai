@@ -9,13 +9,14 @@ import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 
 const Login = () => {
-  const { session, loading } = useAuth();
-  if (!loading && session) return <Navigate to="/dashboard" replace />;
+  const { session, loading: authLoading } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
+
+  if (!authLoading && session) return <Navigate to="/dashboard" replace />;
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
