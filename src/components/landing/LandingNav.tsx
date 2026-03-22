@@ -7,7 +7,7 @@ const navLinks = [
   { label: "Features", href: "#features" },
   { label: "Documents", href: "#documents" },
   { label: "Pricing", href: "#pricing" },
-  { label: "Blog", href: "/blog" },
+  { label: "Blog", href: "/dashboard/blog" },
 ];
 
 export const LandingNav = () => {
