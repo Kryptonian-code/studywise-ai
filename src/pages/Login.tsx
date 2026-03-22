@@ -58,8 +58,8 @@ const Login = () => {
               </button>
             </div>
           </div>
-          <Button variant="hero" className="w-full" size="lg" disabled={loading}>
-            {loading ? "Signing in…" : "Sign In"} <ArrowRight className="h-4 w-4" />
+          <Button variant="hero" className="w-full" size="lg" disabled={submitting}>
+            {submitting ? "Signing in…" : "Sign In"} <ArrowRight className="h-4 w-4" />
           </Button>
         </form>
 
